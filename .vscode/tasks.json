@@ -1,0 +1,47 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"type": "cppbuild",
+			"label": "openmp",
+			"command": "C:\\cygwin64\\bin\\g++.exe",
+			"args": [
+				"-g",
+				"-fopenmp",
+				"${file}",
+				"-o",
+				"${fileDirname}\\${fileBasenameNoExtension}.exe"
+			],
+			"options": {
+				"cwd": "${fileDirname}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build",
+			"detail": "компилятор: C:\\cygwin64\\bin\\g++.exe"
+		},
+		{
+			"type": "cppbuild",
+			"label": "mpi",
+			"command": "g++",
+			"args": [
+				"${file}",
+				"-o",
+				"${fileDirname}\\${fileBasenameNoExtension}.exe",
+				"-fopenmp",
+				"-l msmpi",
+				"-L \"C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Lib\\x64\"",
+				"-I \"C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Include\"",
+			],
+			"options": {
+				"cwd": "${fileDirname}"
+			},
+			"problemMatcher": [
+				"$gcc"
+			],
+			"group": "build",
+			"detail": "компилятор: C:\\cygwin64\\bin\\g++.exe"
+		}
+	]
+}
