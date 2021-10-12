@@ -1,8 +1,9 @@
 #include "time.h"
 #include "random"
 #include <iostream>
+#include <cstring>
 
-void print_matrix(double *matrix, int n)
+void print_matrix(long double *matrix, int n)
 {
     for (int i = 0; i < n; i++)
     {
@@ -14,7 +15,7 @@ void print_matrix(double *matrix, int n)
     }
 }
 
-void print_vector(double *vector, int n)
+void print_vector(long double *vector, int n)
 {
     for (int i = 0; i < n; i++)
     {
@@ -23,9 +24,9 @@ void print_vector(double *vector, int n)
     std::cout << std::endl;
 }
 //returns vector
-double *matrix_mul_vector(double *matrix_left, double *vector, int n)
+long double *matrix_mul_vector(long double *matrix_left, long double *vector, int n)
 {
-    double *result = new double[n];
+    long double *result = new long double[n]{0};
 
     for (int row_index = 0; row_index < n; row_index += 1)
     {
@@ -37,9 +38,9 @@ double *matrix_mul_vector(double *matrix_left, double *vector, int n)
     }
     return result;
 }
-double *vector_sub_vector(double *vector_left, double *vector_right, int n)
+long double *vector_sub_vector(long double *vector_left, long double *vector_right, int n)
 {
-    double *result = new double[n];
+    long double *result = new long double[n];
     for (int index = 0; index < n; index += 1)
     {
         result[index] = vector_left[index] - vector_right[index];
@@ -47,14 +48,26 @@ double *vector_sub_vector(double *vector_left, double *vector_right, int n)
     return result;
 }
 
-double vector_norm(double *vector, int n)
+long double vector_norm(long double *vector, int n)
 {
-    double sum = 0;
+    long double sum = 0;
     for (int row_index = 0; row_index < n; row_index += 1)
     {
         sum += vector[row_index] * vector[row_index];
     }
     return sqrt(sum);
+}
+
+long double vector_max(long double *vector, int n)
+{
+    long double max = vector[0];
+
+    for (int row_index = 1; row_index < n; row_index += 1)
+    {
+        if (max < abs(vector[row_index]))
+            max = abs(vector[row_index]);
+    }
+    return max;
 }
 //mpiexec -n 1 $fileNameWithoutExt
 //cd "c:\Users\boral\MPIProjects\lab1\lab3\" && g++ lab3.cpp -o lab3 -fopenmp -l msmpi -L "C:\Program Files (x86)\Microsoft SDKs\MPI\Lib\x64" -I "C:\Program Files (x86)\Microsoft SDKs\MPI\Include"
@@ -62,21 +75,25 @@ int main()
 {
     srand(time(nullptr));
 
-    double convergence_criteria = 1e-7;
-    double omega = 1.5;
+    long double convergence_criteria = 1e-5;
+    long double omega = 1.9;
 
     std::cout << "Enter matrix size(N): ";
     int N;
     std::cin >> N;
 
-    double *matrix = new double[N * N];
+    long double *matrix = new long double[N * N];
     for (int i = 0; i < N; i++)
     {
         for (int j = 0; j < N; j++)
         {
-            if (i <= j)
+            if (i < j)
             {
-                matrix[i * N + j] = rand() % 100;
+                matrix[i * N + j] = rand() % 58 + 1;
+            }
+            else if (i == j) 
+            {
+                matrix[i * N + j] = rand() % 100 + 58*N*N;
             }
             else
             {
@@ -84,17 +101,23 @@ int main()
             }
         }
     }
-    double *vector = new double[N];
+    long double *vector = new long double[N];
     for (int i = 0; i < N; i++)
     {
-        vector[i] = rand() % 100;
+        vector[i] = rand() % 100 + 1;
     }
     //example 1
-   // matrix = new double[N * N]{4, -1, -6, 0, -5, -4, 10, 8, 0, 9, 4, -2, 1, 0, -7, 5};
-   // vector = new double[N]{2, 21, -12, -6};
+    //  N = 4;
+    //  matrix = new long double[N * N]{4, -1, -6, 0, -5, -4, 10, 8, 0, 9, 4, -2, 1, 0, -7, 5};
+    //  vector = new long double[N]{2, 21, -12, -6};
+    //  N = 2;
     //example 2
-   // matrix = new double[N * N]{1, 1, 1, 3};
-   // vector = new double[N]{3, 7};
+    // matrix = new long double[N * N]{1, 1, 1, 3};
+    //vector = new long double[N]{3, 7};
+    //example 3
+    //  N = 6;
+    // matrix = new long double[N * N]{9, 0, 0, 0, 0, 0, 1, 2, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 7, -1, 0, 1, 1, 1, 1, 1, 1, 1, 7, 0, 1, 12, 1, 1 };
+    // vector = new long double[N]{ 90, 15, 16, 19, -20, 10 };
 
     std::cout << "Initial matrix: \n";
     print_matrix(matrix, N);
@@ -102,30 +125,38 @@ int main()
     print_vector(vector, N);
 
     int step = 0;
-    double *phi = new double[N]{0};
+    long double *phi = new long double[N]{0};
+    long double *phi_old = new long double[N]{0};
+
     //resudal
-    double residal = abs(vector_norm(vector_sub_vector(matrix_mul_vector(matrix, phi, N), vector, N), N));
+    long double residal = 1e100;
     while (residal > convergence_criteria)
     {
         for (int row_index = 0; row_index < N; row_index += 1)
         {
-            double sigma = 0;
-            for (int column_index = 0; column_index < N; column_index++)
+            long double sigma = 0;
+            for (int column_index = 0; column_index < row_index; ++column_index)
             {
-                auto matrix_index = row_index * N + column_index;
-                if (row_index != column_index)
-                {
-                    sigma += matrix[matrix_index] * phi[column_index];
-                }
+                sigma += matrix[row_index * N + column_index] * phi[column_index] * omega;
             }
-            phi[row_index] = (1 - omega) * phi[row_index] + (omega / matrix[row_index * N + row_index]) * (vector[row_index] - sigma);
+            for (int column_index = row_index+1; column_index < N; ++column_index)
+            {
+                sigma += matrix[row_index * N + column_index] * phi_old[column_index] * omega;
+            }
+            phi[row_index] = (vector[row_index] * omega - sigma) / matrix[row_index * N + row_index] - phi_old[row_index] * (omega - 1);
         }
-        residal = vector_norm(vector_sub_vector(matrix_mul_vector(matrix, phi, N), vector, N), N);
+        residal = vector_norm(vector_sub_vector(phi, phi_old, N), N);
+        
+        memcpy(phi_old, phi, N * sizeof(long double));
         step += 1;
-        std::cout << "Step " << step << ", residal = " << residal << ", phi = ";
-        print_vector(phi, N);
+        // std::cout << "Error vector: ";
+        // print_vector(vector_sub_vector(matrix_mul_vector(matrix, phi, N), vector, N), N);
+        //std::cout << "Phi: ";
+        //print_vector(phi, N);
+        // std::cout << "Step " << step  << ", residal = " << residal << std::endl;
     }
     std::cout << "Result: ";
     print_vector(phi, N);
+    std::cout << "Error: " << residal << std::endl;
     return 0;
 }

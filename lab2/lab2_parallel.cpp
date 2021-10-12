@@ -63,7 +63,7 @@ bool checkSorted(int *array, int size)
 
 int main()
 {
-    srand(time(nullptr));
+    srand(9373937);
     std::cout << "Enter array size: ";
     int size;
     std::cin >> size;
