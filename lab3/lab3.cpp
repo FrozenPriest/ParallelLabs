@@ -68,8 +68,19 @@ long double vector_max(long double *vector, int n)
 }
 //mpiexec -n 1 $fileNameWithoutExt
 //cd "c:\Users\boral\MPIProjects\lab1\lab3\" && g++ lab3.cpp -o lab3 -fopenmp -l msmpi -L "C:\Program Files (x86)\Microsoft SDKs\MPI\Lib\x64" -I "C:\Program Files (x86)\Microsoft SDKs\MPI\Include"
-int main()
+int main(int argc, char *argv[])
 {
+    //init mpi
+    if (int rc = MPI_Init(&argc, &argv))
+    {
+        std::cout << "Ошибка запуска, выполнение остановлено " << std::endl;
+        MPI_Abort(MPI_COMM_WORLD, rc);
+    }
+    int rank;
+    int numprocs;
+    MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
     srand(134932190);
 
     long double convergence_criteria = 1e-5;
@@ -91,7 +102,7 @@ int main()
             }
             else if (i == j)
             {
-                 matrix[i * N + j] = 0;
+                matrix[i * N + j] = 0;
             }
             else
             {
@@ -127,6 +138,13 @@ int main()
     std::cout << "Initial vector: \n";
     print_vector(vector, N);
 
+    ///////////////////////////////////
+    double startwtime = 0;
+    if (rank == 0)
+    {
+        startwtime = MPI_Wtime();
+    }
+
     int step = 0;
     long double *phi = new long double[N]{0};
     long double *phi_old = new long double[N]{0};
@@ -160,14 +178,23 @@ int main()
         //print_vector(phi, N);
         // std::cout << "Step " << step  << ", residal = " << residal << std::endl;
     }
-    std::cout << "Result: ";
-    print_vector(phi, N);
-    std::cout << "Error: " << residal << std::endl;
+
+    if (rank == 0)
+    {
+        double endwtime = MPI_Wtime();
+
+        std::cout << "Result: ";
+        print_vector(phi, N);
+        std::cout << "Error: " << residal << std::endl;
+        std::cout << (endwtime - startwtime) * 1000 << " ms." << std::endl;
+    }
 
     delete phi;
     delete phi_old;
     delete phi_diff;
     delete matrix;
     delete vector;
+
+    MPI_Finalize();
     return 0;
 }
