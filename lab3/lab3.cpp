@@ -134,9 +134,9 @@ int main(int argc, char *argv[])
     // vector = new long double[N]{ 90, 15, 16, 19, -20, 10 };
 
     std::cout << "Initial matrix: \n";
-    print_matrix(matrix, N);
+    //print_matrix(matrix, N);
     std::cout << "Initial vector: \n";
-    print_vector(vector, N);
+    //print_vector(vector, N);
 
     ///////////////////////////////////
     double startwtime = 0;
