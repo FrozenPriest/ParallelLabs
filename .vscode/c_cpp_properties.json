@@ -14,7 +14,7 @@
             "compilerPath": "C:/cygwin64/bin/g++.exe",
             "cStandard": "c17",
             "cppStandard": "c++17",
-            "intelliSenseMode": "windows-msvc-x64",
+            "intelliSenseMode": "linux-gcc-x64",
             "browse": {
                 "path": [
                     "C:\\Program Files (x86)\\Microsoft SDKs\\MPI\\Include"

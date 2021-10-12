@@ -24,28 +24,24 @@ void print_vector(long double *vector, int n)
     std::cout << std::endl;
 }
 //returns vector
-long double *matrix_mul_vector(long double *matrix_left, long double *vector, int n)
+void matrix_mul_vector(long double *matrix_left, long double *vector, int n, long double *result)
 {
-    long double *result = new long double[n]{0};
-
     for (int row_index = 0; row_index < n; row_index += 1)
     {
+        result[row_index] = 0;
         for (int column_index = 0; column_index < n; column_index++)
         {
             auto matrix_index = row_index * n + column_index;
             result[row_index] += matrix_left[matrix_index] * vector[column_index];
         }
     }
-    return result;
 }
-long double *vector_sub_vector(long double *vector_left, long double *vector_right, int n)
+void vector_sub_vector(long double *vector_left, long double *vector_right, int n, long double *result)
 {
-    long double *result = new long double[n];
     for (int index = 0; index < n; index += 1)
     {
         result[index] = vector_left[index] - vector_right[index];
     }
-    return result;
 }
 
 long double vector_norm(long double *vector, int n)
@@ -73,7 +69,7 @@ long double vector_max(long double *vector, int n)
 //cd "c:\Users\boral\MPIProjects\lab1\lab3\" && g++ lab3.cpp -o lab3 -fopenmp -l msmpi -L "C:\Program Files (x86)\Microsoft SDKs\MPI\Lib\x64" -I "C:\Program Files (x86)\Microsoft SDKs\MPI\Include"
 int main()
 {
-    srand(time(nullptr));
+    srand(134932190);
 
     long double convergence_criteria = 1e-5;
     long double omega = 1.9;
@@ -83,6 +79,7 @@ int main()
     std::cin >> N;
 
     long double *matrix = new long double[N * N];
+    long double sum = 0;
     for (int i = 0; i < N; i++)
     {
         for (int j = 0; j < N; j++)
@@ -91,15 +88,20 @@ int main()
             {
                 matrix[i * N + j] = rand() % 58 + 1;
             }
-            else if (i == j) 
+            else if (i == j)
             {
-                matrix[i * N + j] = rand() % 100 + 58*N*N;
+                 matrix[i * N + j] = 0;
             }
             else
             {
                 matrix[i * N + j] = matrix[j * N + i];
             }
+            sum += matrix[i * N + j];
         }
+    }
+    for (int i = 0; i < N; i++)
+    {
+        matrix[i * N + i] = sum + rand() % 100 + 1;
     }
     long double *vector = new long double[N];
     for (int i = 0; i < N; i++)
@@ -128,6 +130,7 @@ int main()
     long double *phi = new long double[N]{0};
     long double *phi_old = new long double[N]{0};
 
+    long double *phi_diff = new long double[N]{0};
     //resudal
     long double residal = 1e100;
     while (residal > convergence_criteria)
@@ -139,14 +142,15 @@ int main()
             {
                 sigma += matrix[row_index * N + column_index] * phi[column_index] * omega;
             }
-            for (int column_index = row_index+1; column_index < N; ++column_index)
+            for (int column_index = row_index + 1; column_index < N; ++column_index)
             {
                 sigma += matrix[row_index * N + column_index] * phi_old[column_index] * omega;
             }
             phi[row_index] = (vector[row_index] * omega - sigma) / matrix[row_index * N + row_index] - phi_old[row_index] * (omega - 1);
         }
-        residal = vector_norm(vector_sub_vector(phi, phi_old, N), N);
-        
+        vector_sub_vector(phi, phi_old, N, phi_diff);
+        residal = vector_norm(phi_diff, N);
+
         memcpy(phi_old, phi, N * sizeof(long double));
         step += 1;
         // std::cout << "Error vector: ";
@@ -158,5 +162,11 @@ int main()
     std::cout << "Result: ";
     print_vector(phi, N);
     std::cout << "Error: " << residal << std::endl;
+
+    delete phi;
+    delete phi_old;
+    delete phi_diff;
+    delete matrix;
+    delete vector;
     return 0;
 }
