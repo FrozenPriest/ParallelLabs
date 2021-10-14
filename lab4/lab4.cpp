@@ -75,7 +75,7 @@ int triangulation(long double *matrix, int n)
             swap_row(matrix, i, imax, n);
             ++swap_count;
         }
-//#pragma omp parallel for
+        //#pragma omp parallel for
         for (int j = i + 1; j < n; ++j)
         {
             long double mul = -matrix[j * n + i] / matrix[i * n + i];
@@ -126,7 +126,6 @@ long double *solve_crammer(long double *matrix, long double *vector, int n)
     {
         return nullptr; //no answer
     }
-    std::cout << "Determinant: " << determinant;
     long double *solution = new long double[n]{0};
 #pragma omp parallel
     {
