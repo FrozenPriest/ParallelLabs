@@ -200,7 +200,7 @@ int main()
         return 0;
     }
     print_vector(answer, N);
-    std::cout << "Time: " << end - begin << " ms." << std::endl;
+    std::cout << "Time: " << end - begin << " s." << std::endl;
 
     return 0;
 }

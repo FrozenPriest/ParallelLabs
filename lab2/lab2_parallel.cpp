@@ -92,7 +92,7 @@ int main()
     double end = omp_get_wtime();
 
     //print_array(array, size);
-    std::cout << "Time: " << end - begin << " ms." << std::endl;
+    std::cout << "Time: " << end - begin << " s." << std::endl;
     std::cout << "Sort is confirmed!" << std::endl;
 
     delete array;
