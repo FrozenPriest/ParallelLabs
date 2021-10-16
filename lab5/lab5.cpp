@@ -111,10 +111,42 @@ double *extract_U_matrix(double *matrix, int n)
     return U;
 }
 
-double *solve_lu_decomposition(double *matrix, double *vector, int n, int rank, int numprocs)
+double *solve_y(double *L, double *vector, int n, int rank, int numprocs)
 {
     double *solution = new double[n]{0};
 
+    for (int i = 0; i < n; i++)
+    {
+        double sum = 0;
+        for (int j = 0; j < i; j++)
+        {
+            sum += L[i * n + j] * solution[j];
+        }
+        solution[i] = vector[i] - sum;
+    }
+
+    return solution;
+}
+
+double *solve_x(double *U, double *y, int n, int rank, int numprocs)
+{
+    double *solution = new double[n]{0};
+
+    for (int i = n-1; i >= 0; i--)
+    {
+        double sum = 0;
+        for (int j = i + 1; j < n; j++)
+        {
+            sum += U[i * n + j] * solution[j];
+        }
+        solution[i] = (y[i] - sum) / U[i * n + i];
+    }
+
+    return solution;
+}
+
+double *solve_lu_decomposition(double *matrix, double *vector, int n, int rank, int numprocs)
+{
     lu_decomposition(matrix, n, rank, numprocs);
 
     double *L = extract_L_matrix(matrix, n);
@@ -132,10 +164,12 @@ double *solve_lu_decomposition(double *matrix, double *vector, int n, int rank, 
         std::cout << "L * U = \n";
         print_matrix(lu, n);
     }
-    //todo solve this
+
+    double *y = solve_y(L, vector, n, rank, numprocs);
+    double *solution = solve_x(U, y, n, rank, numprocs);
 
     return solution;
-}
+} //5 = -1.17584 -3.6856 1.52991 -4.08969 2.00373
 
 //mpiexec -n 1 $fileNameWithoutExt
 //cd "c:\Users\boral\MPIProjects\lab1\lab5\" && g++ lab5.cpp -o lab5 -fopenmp -l msmpi -L "C:\Program Files (x86)\Microsoft SDKs\MPI\Lib\x64" -I "C:\Program Files (x86)\Microsoft SDKs\MPI\Include"
