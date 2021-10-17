@@ -64,37 +64,44 @@ bool checkSorted(int *array, int size)
 int main()
 {
     srand(9373937);
-    std::cout << "Enter array size: ";
-    int size;
-    std::cin >> size;
+    int size = 0;
 
-    std::cout << "Enter thread count: ";
-    int thread_count;
-    std::cin >> thread_count;
-
-    int *array = new int[size];
-    for (int i = 0; i < size; i++)
+    for (int i = 1; i < 20; i++)
     {
-        array[i] = rand() % 100;
-    }
-    print_array(array, size);
+        size = i * 30000;
+        for (int thread_count = 1; thread_count < 9; thread_count++)
+        {
+            int *array = new int[size];
+            for (int i = 0; i < size; i++)
+            {
+                array[i] = rand() % 100;
+            }
+            // print_array(array, size);
 
-    //openmp settings
-    omp_set_dynamic(0);
-    omp_set_num_threads(thread_count);
+            //openmp settings
+            omp_set_dynamic(0);
+            omp_set_num_threads(thread_count);
 
-    double begin = omp_get_wtime();
+            double begin = omp_get_wtime();
 #pragma omp parallel
-    {
+            {
 #pragma omp single
-        quicksort(array, 0, size - 1);
+                quicksort(array, 0, size - 1);
+            }
+            double end = omp_get_wtime();
+
+            //print_array(array, size);
+            std::cout << thread_count << "; " << size << "; " << end - begin << std::endl;
+
+            delete array;
+        }
     }
-    double end = omp_get_wtime();
-
-    print_array(array, size);
-    std::cout << "Time: " << end - begin << " s." << std::endl;
-    std::cout << "Sort is confirmed!" << std::endl;
-
-    delete array;
     return 0;
 }
+
+/*
+    Check when making report:
+    https://stackoverflow.com/questions/16007640/openmp-parallel-quicksort
+    https://pro-prof.com/archives/1220
+    
+*/

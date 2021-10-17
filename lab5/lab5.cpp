@@ -46,10 +46,9 @@ void lu_decomposition(double *matrix, int n, int rank, int numprocs)
     MPI_Barrier(MPI_COMM_WORLD);
     for (int row_index = 0; row_index < n - 1; row_index++)
     {
-        int pseudorank = row_index % numprocs;
-        if (pseudorank == rank)
+        for (int column_index = row_index + 1; column_index < n; column_index++)
         {
-            for (int column_index = row_index + 1; column_index < n; column_index++)
+            if (column_index % numprocs == rank)
             {
                 matrix[column_index * n + row_index] = matrix[column_index * n + row_index] / matrix[row_index * n + row_index];
 
@@ -58,8 +57,9 @@ void lu_decomposition(double *matrix, int n, int rank, int numprocs)
                     matrix[column_index * n + z] = matrix[column_index * n + z] - (matrix[column_index * n + row_index] * matrix[row_index * n + z]);
                 }
             }
+            MPI_Bcast(matrix + column_index * n + row_index, n - row_index, MPI_DOUBLE, column_index % numprocs, MPI_COMM_WORLD);
+
         }
-        MPI_Bcast(matrix, n * n, MPI_DOUBLE, pseudorank, MPI_COMM_WORLD);
     }
 }
 
