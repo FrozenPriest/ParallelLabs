@@ -49,13 +49,13 @@ void lu_decomposition(double *matrix, int n, int rank, int numprocs)
         int pseudorank = row_index % numprocs;
         if (pseudorank == rank)
         {
-            for (int i = row_index + 1; i < n; i++)
+            for (int column_index = row_index + 1; column_index < n; column_index++)
             {
-                matrix[i * n + row_index] = matrix[i * n + row_index] / matrix[row_index * n + row_index];
+                matrix[column_index * n + row_index] = matrix[column_index * n + row_index] / matrix[row_index * n + row_index];
 
                 for (int z = row_index + 1; z < n; z++)
                 {
-                    matrix[i * n + z] = matrix[i * n + z] - (matrix[i * n + row_index] * matrix[row_index * n + z]);
+                    matrix[column_index * n + z] = matrix[column_index * n + z] - (matrix[column_index * n + row_index] * matrix[row_index * n + z]);
                 }
             }
         }
@@ -132,7 +132,7 @@ double *solve_x(double *U, double *y, int n, int rank, int numprocs)
 {
     double *solution = new double[n]{0};
 
-    for (int i = n-1; i >= 0; i--)
+    for (int i = n - 1; i >= 0; i--)
     {
         double sum = 0;
         for (int j = i + 1; j < n; j++)
@@ -157,12 +157,12 @@ double *solve_lu_decomposition(double *matrix, double *vector, int n, int rank, 
 
     if (rank == 0)
     {
-        std::cout << "L:\n";
-        print_matrix(L, n);
-        std::cout << "U:\n";
-        print_matrix(U, n);
-        std::cout << "L * U = \n";
-        print_matrix(lu, n);
+        //std::cout << "L:\n";
+        //print_matrix(L, n);
+        //std::cout << "U:\n";
+        //print_matrix(U, n);
+        //std::cout << "L * U = \n";
+        //print_matrix(lu, n);
     }
 
     double *y = solve_y(L, vector, n, rank, numprocs);
@@ -195,16 +195,29 @@ int main()
     //matrix generation
     double *matrix = new double[N * N];
     double sum = 0;
-    do
+    for (int i = 0; i < N; i++)
     {
-        for (int i = 0; i < N; i++)
+        for (int j = 0; j < N; j++)
         {
-            for (int j = 0; j < N; j++)
+            if (i < j)
             {
-                matrix[i * N + j] = rand() % 100 - 50;
+                matrix[i * N + j] = rand() % 58 + 1;
             }
+            else if (i == j)
+            {
+                matrix[i * N + j] = 0;
+            }
+            else
+            {
+                matrix[i * N + j] = matrix[j * N + i];
+            }
+            sum += matrix[i * N + j];
         }
-    } while (std::abs(get_gauss_determinant(matrix, N)) < 1e-5);
+    }
+    for (int i = 0; i < N; i++)
+    {
+        matrix[i * N + i] = sum + rand() % 100 + 1;
+    }
 
     //vector generation
     double *vector = new double[N];
@@ -215,9 +228,9 @@ int main()
     if (rank == 0)
     {
         std::cout << "Initial matrix: \n";
-        print_matrix(matrix, N);
+        //print_matrix(matrix, N);
         std::cout << "Initial vector: \n";
-        print_vector(vector, N);
+        //print_vector(vector, N);
     }
     double begin = MPI_Wtime();
 
@@ -231,8 +244,8 @@ int main()
             std::cout << "Answer is non-existant" << std::endl;
             return 0;
         }
-        std::cout << "Answer:\n";
-        print_vector(answer, N);
+        //std::cout << "Answer:\n";
+        //print_vector(answer, N);
         std::cout << "Time: " << end - begin << " s." << std::endl;
     }
 
