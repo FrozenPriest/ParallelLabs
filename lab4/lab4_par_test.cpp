@@ -78,9 +78,8 @@ void swap_row(long double *matrix, int i, int j, int n)
 }
 
 //returns swap count
-int triangulation(long double *matrix, int n)
+void triangulation(long double *matrix, int n)
 {
-    int swap_count = 0;
     for (int i = 0; i < n - 1; ++i)
     {
         //#pragma omp parallel for
@@ -88,15 +87,14 @@ int triangulation(long double *matrix, int n)
         {
             long double mul = -matrix[j * n + i] / matrix[i * n + i];
             matrix[j * n + i] = 0;
-            for (int k = i+1; k < n; ++k)
+            for (int k = i + 1; k < n; ++k)
             {
                 matrix[j * n + k] += matrix[i * n + k] * mul;
             }
         }
     }
-    return swap_count;
 }
-
+//4.17148  2.38426  1.42846  1.16603
 long double *copy_array(long double *array, int n)
 {
     long double *copy = new long double[n];
@@ -112,13 +110,10 @@ long double get_gauss_determinant(long double *matrix, int n)
 {
     long double *matrix_copy = copy_array(matrix, n * n);
 
-    int swap_count = triangulation(matrix_copy, n);
+    triangulation(matrix_copy, n);
+    
     long double determinant = 1;
 
-    if (swap_count % 2 == 1)
-    {
-        determinant = -1;
-    }
     for (int i = 0; i < n; i++)
     {
         determinant *= matrix_copy[i * n + i];
@@ -159,63 +154,63 @@ int main()
 {
     srand(32549201);
 
-    int N;
-    std::cout << "Enter matrix size(N): ";
-    std::cin >> N;
-
-    //matrix generation
-    long double *matrix = new long double[N * N];
-    long double sum = 0;
-    do
+    for (int i = 1; i < 40; i++)
     {
-        for (int i = 0; i < N; i++)
+        int N = i * 20;
+        for (int thread_count = 1; thread_count < 9; thread_count++)
         {
-            for (int j = 0; j < N; j++)
+
+            //matrix generation
+            long double *matrix = new long double[N * N];
+            long double sum = 0;
+            do
             {
-                matrix[i * N + j] = rand() % 100 - 50;
+                for (int i = 0; i < N; i++)
+                {
+                    for (int j = 0; j < N; j++)
+                    {
+                        matrix[i * N + j] = rand() % 100 - 50;
+                    }
+                }
+            } while (std::abs(get_gauss_determinant(matrix, N)) < 1e-5);
+
+            //vector generation
+            long double *vector = new long double[N];
+            for (int i = 0; i < N; i++)
+            {
+                vector[i] = rand() % 100 + 1;
             }
+
+            omp_set_dynamic(0);
+            omp_set_num_threads(thread_count);
+
+            double begin = omp_get_wtime();
+
+            long double *answer = solve_crammer(matrix, vector, N);
+
+            double end = omp_get_wtime();
+
+            if (answer == nullptr)
+            {
+                std::cout << "Answer is non-existant" << std::endl;
+                return 0;
+            }
+            //print_vector(answer, N);
+            //std::cout << "Time: " << end - begin << " s." << std::endl;
+
+            long double *check_result = new long double[N]{0};
+            matrix_mul_vector(matrix, answer, check_result, N);
+            vector_sub_vector(vector, check_result, check_result, N);
+            //print_vector(check_result, N);
+            long double error = vector_norm(check_result, N);
+            //std::cout << "Error: " << error << std::endl;
+
+            std::cout << N << ";" << thread_count << ";" << end - begin << ";" << error << std::endl;
+
+            delete check_result;
+            delete vector;
+            delete matrix;
         }
-    } while (std::abs(get_gauss_determinant(matrix, N)) < 1e-5);
-
-    //vector generation
-    long double *vector = new long double[N];
-    for (int i = 0; i < N; i++)
-    {
-        vector[i] = rand() % 100 + 1;
     }
-
-    std::cout << "Initial matrix: \n";
-    print_matrix(matrix, N);
-    std::cout << "Initial vector: \n";
-    print_vector(vector, N);
-
-    int thread_count;
-    std::cout << "Enter thread count: ";
-    std::cin >> thread_count;
-
-    omp_set_dynamic(0);
-    omp_set_num_threads(thread_count);
-
-    double begin = omp_get_wtime();
-
-    long double *answer = solve_crammer(matrix, vector, N);
-
-    double end = omp_get_wtime();
-
-    if (answer == nullptr)
-    {
-        std::cout << "Answer is non-existant" << std::endl;
-        return 0;
-    }
-    print_vector(answer, N);
-    std::cout << "Time: " << end - begin << " s." << std::endl;
-
-    long double *check_result = new long double[N]{0};
-    matrix_mul_vector(matrix, answer, check_result, N);
-    vector_sub_vector(vector, check_result, check_result, N);
-    print_vector(check_result, N);
-    long double error = vector_norm(check_result, N);
-    std::cout << "Error: " << error << std::endl;
-
     return 0;
 }

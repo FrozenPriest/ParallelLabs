@@ -68,7 +68,7 @@ int main()
 
     for (int i = 1; i < 20; i++)
     {
-        size = i * 30000;
+        size = i * 500;
         for (int thread_count = 1; thread_count < 9; thread_count++)
         {
             int *array = new int[size];
@@ -98,10 +98,3 @@ int main()
     }
     return 0;
 }
-
-/*
-    Check when making report:
-    https://stackoverflow.com/questions/16007640/openmp-parallel-quicksort
-    https://pro-prof.com/archives/1220
-    
-*/
